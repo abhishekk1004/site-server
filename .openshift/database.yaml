@@ -130,7 +130,6 @@ items:
               persistentVolumeClaim:
                 claimName: db-run-storage
 
-
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:

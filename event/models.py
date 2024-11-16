@@ -44,7 +44,7 @@ class Event(models.Model):
     description = models.TextField(blank=False, null=False)
     rsvp_url = models.URLField(max_length=500, null=True, blank=True)
     image = models.ImageField(
-        upload_to="media/%Y/%m/%d/events", null=True, blank=True
+        upload_to="%Y/%m/%d/events", null=True, blank=True
     )
     add_to_calender_url = models.URLField(
         max_length=500, null=True, blank=True
@@ -187,7 +187,7 @@ class Speaker(models.Model):
     linkedin = models.URLField(max_length=255)
     description = models.TextField(blank=False, null=True)
     image = models.ImageField(
-        upload_to="media/%Y/%m/%d/speakers/",
+        upload_to="%Y/%m/%d/speakers/",
         null=True,
         blank=True,
     )
@@ -208,7 +208,7 @@ class Schedule(models.Model):
         blank=False,
     )
     image = models.ImageField(
-        upload_to="media/%Y/%m/%d/schedules/",
+        upload_to="%Y/%m/%d/schedules/",
         null=True,
         blank=True,
     )
@@ -236,7 +236,7 @@ class EventImage(models.Model):
     )
     caption = models.TextField(null=True, blank=True)
     image = models.ImageField(
-        upload_to="media/%Y/%m/%d/event_images", null=True, blank=True
+        upload_to="%Y/%m/%d/event_images", null=True, blank=True
     )
     position = models.IntegerField(default=1)
     published = models.BooleanField(default=False)

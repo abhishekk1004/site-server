@@ -26,7 +26,6 @@ COPY . .
 RUN chmod +x Makefile
 # make empty directory for logs and media
 RUN mkdir logs media
-
 RUN chown -R gnome_user:gnome_group /app
 USER gnome_user
 

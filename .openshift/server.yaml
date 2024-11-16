@@ -1,6 +1,82 @@
 apiVersion: v1
 kind: List
 items:
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: gnome-nepal-server-nginx-service
+    spec:
+      selector:
+        app: gnome-nepal-server-nginx  # Updated to match Deployment labels
+      ports:
+        - name: http  # Added port name
+          port: 8080
+          targetPort: 8080
+
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: gnome-nepal-server-nginx
+      labels:
+        app: gnome-nepal-server-nginx  # Ensured consistency
+    spec:
+      replicas: 1
+      strategy:
+        type: Recreate
+      selector:
+        matchLabels:
+          app: gnome-nepal-server-nginx  # Ensured consistency
+      template:
+        annotations:
+          alpha.image.policy.openshift.io/resolve-names: '*'
+        metadata:
+          labels:
+            app: gnome-nepal-server-nginx  # Ensured consistency
+        spec:
+          containers:
+            - name: gnome-nepal-media-nginx
+              image: public.ecr.aws/nginx/nginx:stable-alpine
+              imagePullPolicy: Always
+              ports:
+                - name: http
+                  containerPort: 8080
+                  appProtocol: http
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  mkdir -p /var/cache/nginx/client_temp &&
+                  nginx -g 'daemon off;'
+          # Use an official Nginx image as the base image
+              volumeMounts:
+                - name: nginx-conf-file
+                  mountPath: /etc/nginx/nginx.conf
+                  subPath: nginx.conf
+
+                - name: media-storage
+                  mountPath: /media
+
+                - name: nginx-cache-storage
+                  mountPath: /var/cache
+
+          volumes:
+            - name: nginx-conf-file
+              secret:
+                secretName: django-server-secret
+                items:
+                  - key: nginx.conf
+                    path: nginx.conf
+
+            - name: media-storage
+              persistentVolumeClaim:
+                claimName: media-storage
+
+            - name: nginx-cache-storage
+              persistentVolumeClaim:
+                claimName: nginx-cache-storage
+
+
   - apiVersion: v1
     kind: Service
     metadata:
@@ -152,16 +228,24 @@ items:
 
               volumeMounts:
                 - name: server-storage
-                  mountPath: /app/staticfiles/  # Replace with the actual path where you want to mount the volume
+                  mountPath: /app/staticfiles/  # replace with the actual path where you want to mount the volume
                 - name: logs-storage
-                  mountPath: /app/logs/
+                  mountPath: /app/logs
+
+                - name: media-storage
+                  mountPath: /app/media
           volumes:
             - name: server-storage
               persistentVolumeClaim:
                 claimName: server-storage
+
             - name: logs-storage
               persistentVolumeClaim:
                 claimName: logs-storage
+
+            - name: media-storage
+              persistentVolumeClaim:
+                claimName: media-storage
 
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -179,17 +263,16 @@ items:
   - apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
-      name: db-storage
+      name: media-storage
       labels:
-        app: gnome-nepal-server   # Updated to match labels
+        app: gnome-nepal-server  # Updated to match labels
     spec:
       storageClassName: efs-csi
       accessModes:
-        - ReadWriteOnce
+        - ReadWriteMany
       resources:  # Corrected from 'resource' to 'resources'
         requests:  # Corrected from 'request' to 'requests'
           storage: 20Gi
-
 
   - apiVersion: v1
     kind: PersistentVolumeClaim
@@ -198,11 +281,40 @@ items:
       labels:
         app: gnome-nepal-server  # Updated to match labels
     spec:
+      storageClassName: efs-csi
       accessModes:
         - ReadWriteOnce
       resources:  # Corrected from 'resource' to 'resources'
         requests:  # Corrected from 'request' to 'requests'
           storage: 2Gi
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: nginx-storage
+      labels:
+        app: gnome-nepal-server-nginx  # Updated to match labels
+    spec:
+      storageClassName: efs-csi
+      accessModes:
+        - ReadWriteOnce
+      resources:  # Corrected from 'resource' to 'resources'
+        requests:  # Corrected from 'request' to 'requests'
+          storage: 1Gi
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: nginx-cache-storage
+      labels:
+        app: gnome-nepal-server-nginx  # Updated to match labels
+    spec:
+      storageClassName: efs-csi
+      accessModes:
+        - ReadWriteOnce
+      resources:  # Corrected from 'resource' to 'resources'
+        requests:  # Corrected from 'request' to 'requests'
+          storage: 1Gi
 
 ---
 apiVersion: route.openshift.io/v1
@@ -212,10 +324,32 @@ metadata:
   labels:
     app: gnome-nepal-server
 spec:
+  host: server-route-gnome-np.apps.openshift.gnome.org
+  path: /
   to:
     kind: Service
     name: server-service
   port:
     targetPort: http  # Use the port name defined in the Service
+  tls:
+    termination: edge
+
+---
+
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: server-nginx-route
+
+  labels:
+    app: gnome-nepal-server
+spec:
+  host: server-route-gnome-np.apps.openshift.gnome.org
+  path: "/media"   # Second path
+  to:
+    kind: Service
+    name: gnome-nepal-server-nginx-service
+  port:
+    tagretPort: http
   tls:
     termination: edge

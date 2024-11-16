@@ -192,14 +192,13 @@ STORAGES = {
     },
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
-        "OPTIONS": {
-            "location": BASE_DIR / "media",  # adjust to your media location
-        },
+        "OPTIONS": {},
     },
 }
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, os.getenv("STATIC_ROOT", "staticfiles"))
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, os.getenv("MEDIA_ROOT", "media"))
 
@@ -309,4 +308,9 @@ SUMMERNOTE_CONFIG = {
     ),
     # Set to `False` to return attachment paths in relative URIs.
     "attachment_absolute_uri": True,
+}
+
+
+MIGRATION_MODULES = {
+    "django_summernote": "summernote.migrations",
 }
