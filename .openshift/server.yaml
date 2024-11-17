@@ -220,11 +220,6 @@ items:
                     secretKeyRef:
                       name: django-server-secret
                       key: DJANGO_CSRF_TRUSTED_ORIGINS
-                - name: MEDIA_ROOT
-                  valueFrom:
-                    secretKeyRef:
-                      name: django-server-secret
-                      key: MEDIA_ROOT
 
               volumeMounts:
                 - name: server-storage
@@ -233,7 +228,7 @@ items:
                   mountPath: /app/logs
 
                 - name: media-storage
-                  mountPath: /app/media
+                  mountPath: /app/media/
           volumes:
             - name: server-storage
               persistentVolumeClaim:
