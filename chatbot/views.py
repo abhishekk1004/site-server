@@ -15,7 +15,7 @@ def chatbot_view(request):
                 return JsonResponse({"error": "Empty message"}, status=400)
 
             response = chatbot_response(text)
-            return JsonResponse({"answer": response})
+            return JsonResponse({"ans": response})
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
